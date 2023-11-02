@@ -12,20 +12,16 @@ var controlled_player = 0;
 var a;
 var p1X, p1Y, p2X, p2Y, p3X, p3Y, p4X, p4Y;
 
-function preload() {
-    databasing();
-    dataPositions();
-   // dataPositions2();
-}
-
 //setup for the game (will be reused multiple times for different game states)
 
 function setup() {
     createCanvas(400,400);
 
+    databasing();
+    dataPositions();
+
     for(let i = 0; i<4; i++) {
         player[i] = createSprite(200,200,50,50);
-        //player[0].x = a;
     }
 
 }
@@ -74,11 +70,6 @@ function dataPositions() {
     }
 }
 
-function dataPositions2() {
-    if(run === true) {
-    }
-}
-
 function draw() {
     background("black");
     if(keyDown("1")) {
@@ -91,15 +82,6 @@ function draw() {
         controlled_player = 3;
     }
     playerMovement();
-
-    player[0].x = p1X;
-    player[0].y = p1Y;
-    player[1].x = p2X;
-    player[1].y = p2Y;
-    player[2].x = p3X;
-    player[2].y = p3Y;
-    player[3].x = p4X;
-    player[3].y = p4Y;
 
     drawSprites();
 }
@@ -124,6 +106,18 @@ function playerMovement() {
         player[controlled_player].x += 5;
         updatePosition();
     }
+
+    camera.x = player[controlled_player].x;
+    camera.y = player[controlled_player].y;
+
+    player[0].x = p1X;
+    player[0].y = p1Y;
+    player[1].x = p2X;
+    player[1].y = p2Y;
+    player[2].x = p3X;
+    player[2].y = p3Y;
+    player[3].x = p4X;
+    player[3].y = p4Y;
 }
 
 function updatePosition() {
