@@ -275,7 +275,9 @@ function joiningGame() {
     playerCount += 1;
     var playerRef = database.ref(sessionName+"/players/player"+playerCount);
     var playerData = {
-        playerName: userName
+        playerName: userName,
+        active: true
+
     }
 
     var playerCountRef = database.ref(sessionName+"/players");
