@@ -19,6 +19,9 @@ var playState = 5;
 var hostGame;
 var joinGame;
 
+var host_or_guest;
+var lobby_or_game = "lobby";
+
 var session_name, session_code;
 var sessionName = "none";
 var sessionCode = 0;
@@ -32,6 +35,12 @@ var join_game;
 
 var playerCount = 1;
 var player = [0,0,0,0];
+var player_active = [false, false, false, false];
+var player_health = [100, 100, 100, 100];
+var player_speed = [5, 5, 5, 5];
+var player_level = [1,1,1,1];
+var player_inventory = [0, 0, 0, 0];
+var toolType = []
 var moveX, moveY;
 
 var controlled_player = 0;
@@ -100,6 +109,21 @@ function setup() {
     joystick.onAxesReleased(stop);
 
         dataPositions();
+    }else if(gameState === playState) {
+        for(let i = 0; i<4; i++) {
+            player[i] = createSprite(200,200,50,50);
+        }
+
+    // code for using the gamepad
+    joystick = createJoystick();
+    if(!joystick.calibrated())
+    joystick.calibrate(true);
+    joystick.onButtonPressed(test);
+    joystick.onButtonReleased(stop);
+    joystick.onAxesPressed(test);
+    joystick.onAxesReleased(stop);
+
+        dataPositions();
     }
 
 }
@@ -116,6 +140,8 @@ function draw() {
         background("red");
     }else if(gameState === lobbyState) {
         background("black");
+        appearances();
+        host_privilege();
         playerMovement();
     }
     
@@ -141,12 +167,14 @@ function findingGame(){
 }
 
 function creatingSession() {
+    host_or_guest = "host";
     sessionName = session_name.value();
     sessionCode = session_code.value();
     loadSession_db();
 }
 
 function findingSession() {
+    host_or_guest = "guest";
     sessionName = session_name.value();
     sessionCode = session_code.value();
     findingSession_db();
@@ -157,6 +185,14 @@ function add_player() {
     console.log(user_name.value());
     controlled_player = playerCount - 1;
     joiningGame();
+}
+
+function host_privilege() {
+    if(host_or_guest === "host") {
+        if(keyDown("k")){
+            updateStatus();
+        }
+    }
 }
 
 
@@ -244,29 +280,38 @@ function loadSession_db() {
     var sessionRef = database.ref(sessionName);
     var sessionData = {
         code: sessionCode,
+        game_state: lobby_or_game,
         players: {
             playercount: 0,
             player1: {
                 active: false,
                 playerName: "",
+                playerLevel: player_level[0],
+                playerInventory: player_inventory[0],
                 x: 200,
                 y: 200
             },
             player2: {
                 active: false,
                 playerName: "",
+                playerLevel: player_level[1],
+                playerInventory: player_inventory[1],
                 x: 200,
                 y: 200
             },
             player3: {
                 active: false,
                 playerName: "",
+                playerLevel: player_level[0],
+                playerInventory: player_inventory[1],
                 x: 200,
                 y: 200
             },
             player4: {
                 active: false,
                 playerName: "",
+                playerLevel: player_level[0],
+                playerInventory: player_inventory[1],
                 x: 200,
                 y: 200
             }
@@ -375,6 +420,60 @@ function updatePosition() {
   function dataSent(err, status) {
     console.log(status);
   }
+}
+
+function appearances() {
+    let a;
+    var activeRef = database.ref(sessionName+"/players");
+    activeRef.on("value", function(data){
+        a = data.val()
+        player_active[0] = a.player1.active
+        player_active[1] = a.player2.active
+        player_active[2] = a.player3.active
+        player_active[3] = a.player4.active
+    })
+
+    if(player_active[0] === false){
+        player[0].visible = false;
+    }else {
+        player[0].visible = true;
+    }
+
+    if(player_active[1] === false){
+        player[1].visible = false;
+    }else {
+        player[1].visible = true;
+    }
+
+    if(player_active[2] === false){
+        player[2].visible = false;
+    }else {
+        player[2].visible = true;
+    }
+
+    if(player_active[3] === false){
+        player[3].visible = false;
+    }else {
+        player[4].visible = true;
+    }
+}
+
+function updateStatus() {
+    lobby_or_game = "game";
+
+    if(lobby_or_game === "game") {
+        var gamestateRef = database.ref(sessionName);
+        var gamestateData = {
+            game_state: lobby_or_game
+        }
+
+        var result = gamestateRef.update(gamestateData, dataSent);
+        console.log(result.key);
+
+  function dataSent(err, status) {
+    console.log(status);
+    }
+}
 }
 
 // gamepad functions
