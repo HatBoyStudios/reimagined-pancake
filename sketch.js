@@ -90,7 +90,8 @@ function setup() {
             player[i] = createSprite(200,200,50,50);
         }
 
-        joystick = createJoystick();
+    // code for using the gamepad
+    joystick = createJoystick();
     if(!joystick.calibrated())
     joystick.calibrate(true);
     joystick.onButtonPressed(test);
@@ -297,6 +298,7 @@ function findingSession_db(){
         playerCount = b.players.playercount
     })
 
+    console.log(playerCount);
     gameState = nameState;
     session_name.remove();
     session_code.remove();
@@ -316,7 +318,7 @@ function joiningGame() {
 
     var playerCountRef = database.ref(sessionName+"/players");
     var playerCountData = {
-        playercount: (playerCount-1)
+        playercount: playerCount
     }
 
     var result = playerRef.update(playerData, dataSent);
@@ -382,6 +384,7 @@ function test(gamepadIndex) {
     var me = gamepadIndex;
 
     if(me.index === 9) {
+        // switching between controllers and keyboard and mouse
         if(gamepadMode === false) {
             gamepadMode = true;
         }else {
@@ -430,11 +433,11 @@ function stop(gamepadIndex) {
     var me = gamepadIndex; 
     
     if(gamepadMode === true) {
-        if(me.index === 1) {
+        if(me.index === 1 && me.type === "axes") {
             moveY = 0;
           }
           
-          if(me.index === 0) {
+          if(me.index === 0 && me.type === "axes") {
             moveX = 0;
           }
           
