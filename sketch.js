@@ -5,6 +5,9 @@ var dataRegister = 0;
 var findPositions = false;
 var run = false;
 
+var joystick;
+var gamepadMode = false;
+
 var gameState = 0;
 var startState = 0;
 var hostState = 1;
@@ -29,6 +32,7 @@ var join_game;
 
 var playerCount = 1;
 var player = [0,0,0,0];
+var moveX, moveY;
 
 var controlled_player = 0;
 
@@ -85,6 +89,14 @@ function setup() {
         for(let i = 0; i<4; i++) {
             player[i] = createSprite(200,200,50,50);
         }
+
+        joystick = createJoystick();
+    if(!joystick.calibrated())
+    joystick.calibrate(true);
+    joystick.onButtonPressed(test);
+    joystick.onButtonReleased(stop);
+    joystick.onAxesPressed(test);
+    joystick.onAxesReleased(stop);
 
         dataPositions();
     }
@@ -149,25 +161,47 @@ function add_player() {
 
 //functions deticated to the actually game
 function playerMovement() {
-    if(keyDown("w")) {
-        player[controlled_player].y -= 5;
-        updatePosition();
-    }
+    if(gamepadMode === false) {
+        if(keyDown("w")) {
+            moveY = -1;
+        }else if(keyDown("s")) {
+            moveY = 1;
+        }
+    
+        if(!(keyDown("w") || keyDown("s"))) {
+            moveY = 0;
+        }
 
-    if(keyDown("a")) {
-        player[controlled_player].x -= 5;
-        updatePosition();
+        if(keyDown("a")) {
+            moveX = -1;
+        }else if(keyDown("d")) {
+            moveX = 1;
+        }
+    
+        if(!(keyDown("a") || keyDown("d"))) {
+            moveX = 0;
+        }
     }
-
-    if(keyDown("s")) {
-        player[controlled_player].y += 5;
-        updatePosition();
-    }
-
-    if(keyDown("d")) {
-        player[controlled_player].x += 5;
-        updatePosition();
-    }
+    
+        if(moveY === -1) {
+            player[controlled_player].y -= 5;
+            updatePosition();
+        }else if(moveY === 1) {
+            player[controlled_player].y += 5;
+            updatePosition();
+        }else {
+            player[controlled_player].y += 0
+        }
+    
+        if(moveX === -1) {
+            player[controlled_player].x -= 5;
+            updatePosition();
+        }else if(moveX === 1) {
+            player[controlled_player].x += 5;
+            updatePosition();
+        }else {
+            player[controlled_player].x += 0;
+        }
 
     camera.x = player[controlled_player].x;
     camera.y = player[controlled_player].y;
@@ -273,7 +307,7 @@ function findingSession_db(){
 
 function joiningGame() {
     playerCount += 1;
-    var playerRef = database.ref(sessionName+"/players/player"+playerCount);
+    var playerRef = database.ref(sessionName+"/players/player"+(playerCount-1));
     var playerData = {
         playerName: userName,
         active: true
@@ -282,7 +316,7 @@ function joiningGame() {
 
     var playerCountRef = database.ref(sessionName+"/players");
     var playerCountData = {
-        playercount: playerCount
+        playercount: (playerCount-1)
     }
 
     var result = playerRef.update(playerData, dataSent);
@@ -339,4 +373,85 @@ function updatePosition() {
   function dataSent(err, status) {
     console.log(status);
   }
+}
+
+// gamepad functions
+
+function test(gamepadIndex) {
+    console.log(gamepadIndex);
+    var me = gamepadIndex;
+
+    if(me.index === 9) {
+        if(gamepadMode === false) {
+            gamepadMode = true;
+        }else {
+            gamepadMode = false;
+        }
+
+        console.log(gamepadMode);
+    }
+    
+    if(gamepadMode === true) {
+        if(me.index === 1 && me.value === -1 && me.type === "axes") {
+            moveY = -1;
+          }else if(me.index === 1 && me.value === 1 && me.type === "axes"){
+            moveY = 1;
+          }else {
+            moveY = 0;
+          }
+          
+          if(me.index === 0 && me.value === -1 && me.type === "axes"){
+            moveX = -1;
+          }else if(me.index === 0 && me.value === 1 && me.type === "axes"){
+            moveX = 1;
+          }else {
+            moveX = 0;
+          }
+          
+          if(me.index === 12) {
+            moveY = -1;
+          }
+          
+          if(me.index === 13){
+            moveY = 1;
+          }
+          
+          if(me.index === 14){
+            moveX = -1;
+          }
+          
+          if(me.index === 15){
+            moveX = 1;
+          }
+        }
+}
+
+function stop(gamepadIndex) {
+    var me = gamepadIndex; 
+    
+    if(gamepadMode === true) {
+        if(me.index === 1) {
+            moveY = 0;
+          }
+          
+          if(me.index === 0) {
+            moveX = 0;
+          }
+          
+          if(me.index === 12) {
+             moveY = 0;
+           }
+          
+           if(me.index === 13) {
+             moveY = 0;
+           }
+          
+           if(me.index === 14) {
+             moveX = 0;
+           }
+          
+           if(me.index === 15) {
+             moveX = 0;
+          }
+    }
 }
