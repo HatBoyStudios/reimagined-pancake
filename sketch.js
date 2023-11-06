@@ -40,13 +40,20 @@ var player_health = [100, 100, 100, 100];
 var player_speed = [5, 5, 5, 5];
 var player_level = [1,1,1,1];
 var player_inventory = [0, 0, 0, 0];
-var toolType = []
+var toolType = [];
 var moveX, moveY;
+
+var playerPosition = [1, 1, 1, 1];
+var YD = 1;
+var XR = 2;
+var YU = 3;
+var XL = 4;
 
 var controlled_player = 0;
 
 var a;
 var p1X, p1Y, p2X, p2Y, p3X, p3Y, p4X, p4Y;
+var p1P, p2P, p3P, p4P;
 
 //setup for the game (will be reused multiple times for different game states)
 
@@ -196,7 +203,7 @@ function host_privilege() {
 }
 
 
-//functions deticated to the actually game
+//functions dedicated to the actually game
 function playerMovement() {
     if(gamepadMode === false) {
         if(keyDown("w")) {
@@ -222,9 +229,11 @@ function playerMovement() {
     
         if(moveY === -1) {
             player[controlled_player].y -= 5;
+            playerPosition[controlled_player] = YU;
             updatePosition();
         }else if(moveY === 1) {
             player[controlled_player].y += 5;
+            playerPosition[controlled_player] = YD;
             updatePosition();
         }else {
             player[controlled_player].y += 0
@@ -232,9 +241,11 @@ function playerMovement() {
     
         if(moveX === -1) {
             player[controlled_player].x -= 5;
+            playerPosition[controlled_player] = XL;
             updatePosition();
         }else if(moveX === 1) {
             player[controlled_player].x += 5;
+            playerPosition[controlled_player] = XR;
             updatePosition();
         }else {
             player[controlled_player].x += 0;
@@ -245,12 +256,16 @@ function playerMovement() {
 
     player[0].x = p1X;
     player[0].y = p1Y;
+    playerPosition[0] = p1P;
     player[1].x = p2X;
     player[1].y = p2Y;
+    playerPosition[1] = p2P;
     player[2].x = p3X;
     player[2].y = p3Y;
+    playerPosition[2] = p3P;
     player[3].x = p4X;
     player[3].y = p4Y;
+    playerPosition[3] = p4P;
 }
 
 //functions made using firebase
@@ -289,7 +304,8 @@ function loadSession_db() {
                 playerLevel: player_level[0],
                 playerInventory: player_inventory[0],
                 x: 200,
-                y: 200
+                y: 200,
+                player_position: playerPosition[0]
             },
             player2: {
                 active: false,
@@ -297,23 +313,26 @@ function loadSession_db() {
                 playerLevel: player_level[1],
                 playerInventory: player_inventory[1],
                 x: 200,
-                y: 200
+                y: 200,
+                player_position: playerPosition[1]
             },
             player3: {
                 active: false,
                 playerName: "",
-                playerLevel: player_level[0],
-                playerInventory: player_inventory[1],
+                playerLevel: player_level[2],
+                playerInventory: player_inventory[2],
                 x: 200,
-                y: 200
+                y: 200,
+                player_position: playerPosition[2]
             },
             player4: {
                 active: false,
                 playerName: "",
-                playerLevel: player_level[0],
-                playerInventory: player_inventory[1],
+                playerLevel: player_level[3],
+                playerInventory: player_inventory[3],
                 x: 200,
-                y: 200
+                y: 200,
+                player_position: playerPosition[3]
             }
         }
     }
@@ -394,12 +413,16 @@ function dataPositions() {
 
             p1X = a.player1.x;
             p1Y = a.player1.y;
+            p1P = a.player1.player_position;
             p2X = a.player2.x;
             p2Y = a.player2.y;
+            p2P = a.player2.player_position;
             p3X = a.player3.x;
             p3Y = a.player3.y;
+            p3P = a.player3.player_position;
             p4X = a.player4.x;
             p4Y = a.player4.y;
+            p4P = a.player4.player_position;
         })
 
        run = true; 
@@ -411,7 +434,8 @@ function updatePosition() {
     var positionRef = database.ref(sessionName+"/players/player"+(controlled_player+1));
     var data = {
         x: player[controlled_player].x,
-        y: player[controlled_player].y
+        y: player[controlled_player].y,
+        player_position: playerPosition[controlled_player]
     };
 
     var result = positionRef.update(data, dataSent);
