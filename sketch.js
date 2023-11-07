@@ -51,6 +51,14 @@ var XL = 4;
 
 var controlled_player = 0;
 
+var enemy = [];
+var enemyGroup;
+var enemyCount = 0;
+var enemySpeed = [];
+var enemyStrength = [];
+var enemyFriction = [];
+var bean = 0;
+
 var a;
 var p1X, p1Y, p2X, p2Y, p3X, p3Y, p4X, p4Y;
 var p1P, p2P, p3P, p4P;
@@ -133,6 +141,8 @@ function setup() {
         dataPositions();
     }
 
+    enemyGroup = createGroup();
+
 }
 
 function draw() {
@@ -150,6 +160,34 @@ function draw() {
         appearances();
         host_privilege();
         playerMovement();
+        if(host_or_guest === "guest"){
+            guesting();
+        }
+    }else if(gameState === playState) {
+        background("black");
+        if(host_or_guest === "guest"){
+            guesting();
+            for(bean; bean < 5; bean++){
+                enemy_behavior(bean);
+            }
+
+            for(let i = 0; i < enemyCount; i++) {
+                enemyRetrieve(i);
+            }
+        }
+        appearances();
+        host_privilege();
+        playerMovement();
+        if(host_or_guest === "host") {
+            for(bean; bean < 5; bean++){
+                enemy_behavior(bean);
+            }
+            for(let i = 0; i < enemyCount; i++) {
+                let target = Math.round(random(0,3));
+                enemy[i].attractionPoint(enemySpeed[i], player[target].position.x, player[target].position.y);
+                enemyDisplay(i);
+            }
+        }
     }
     
 
@@ -203,7 +241,7 @@ function host_privilege() {
 }
 
 
-//functions dedicated to the actually game
+//functions dedicated to the actual game
 function playerMovement() {
     if(gamepadMode === false) {
         if(keyDown("w")) {
@@ -225,6 +263,10 @@ function playerMovement() {
         if(!(keyDown("a") || keyDown("d"))) {
             moveX = 0;
         }
+    }
+
+    if(keyDown("r")) {
+        enemy_behavior(0);
     }
     
         if(moveY === -1) {
@@ -266,6 +308,25 @@ function playerMovement() {
     player[3].x = p4X;
     player[3].y = p4Y;
     playerPosition[3] = p4P;
+}
+
+function enemy_behavior(enemy_number) {
+    let enemy_num = enemy_number;
+
+    let enemy_x = Math.round(random(0, 400));
+    let enemy_y = Math.round(random(0, 400));
+    let target = Math.round(random(0, 3));
+
+    enemy.push(createSprite(enemy_x, enemy_y, 25, 25));
+    enemySpeed.push(5);
+    enemyFriction.push(0.5)
+
+    enemy[enemy_num].friction = enemyFriction[enemy_num];
+    enemyGroup.add(enemy[enemy_num]);
+    console.log(enemy[enemy_num].velocityX);
+    enemyCount++;
+
+    enemyDisplay(enemy_num);
 }
 
 //functions made using firebase
@@ -478,7 +539,7 @@ function appearances() {
     if(player_active[3] === false){
         player[3].visible = false;
     }else {
-        player[4].visible = true;
+        player[3].visible = true;
     }
 }
 
@@ -498,6 +559,65 @@ function updateStatus() {
     console.log(status);
     }
 }
+gameState = playState
+}
+
+function guesting() {
+    let runner, runner2;
+    var guestRef = database.ref(sessionName);
+    guestRef.on("value", function(data){
+        runner = data.val()
+
+        runner2 = runner.game_state
+    })
+
+    if(runner2 === "game") {
+        gameState = playState;
+    }
+
+    //console.log(gameState, runner);
+}
+
+function enemyDisplay(num) {
+    let enemy_num = num;
+    var enemyRef = database.ref(sessionName+"/enemies/enemy"+(enemy_num+1));
+    var enemyData = {
+        x: enemy[enemy_num].x,
+        y: enemy[enemy_num].y
+    }
+
+    var enemy2Ref = database.ref(sessionName+"/enemies/enemy"+(enemy_num+1));
+    var enemy2Data = {
+        enemy_count: enemyCount
+    }
+
+    var result = enemyRef.update(enemyData, dataSent);
+    var result = enemy2Ref.update(enemy2Data, dataSent);
+    console.log(result.key);
+
+  function dataSent(err, status) {
+    console.log(status);
+  }
+}
+
+function enemyCount_retrieve() {
+    let test
+    var enemyRef = database.ref(sessionName+"/enemies")
+    enemyRef.on("value", function(data){
+        test = data.val()
+        enemyCount = test.enemy_count
+    })
+}
+
+function enemyRetrieve(num) {
+    let enemy_num = num;
+    let post;
+    var enemyRef = database.ref(sessionName+"/enemies/enemy"+(enemy_num+1));
+    enemyRef.on("value", function(data){
+        post = data.val()
+        enemy[enemy_num].x = post.x
+        enemy[enemy_num].y = post.y
+    })
 }
 
 // gamepad functions
@@ -526,13 +646,24 @@ function test(gamepadIndex) {
             moveY = 0;
           }
           
-          if(me.index === 0 && me.value === -1 && me.type === "axes"){
+        if(me.index === 0 && me.value === -1 && me.type === "axes"){
             moveX = -1;
-          }else if(me.index === 0 && me.value === 1 && me.type === "axes"){
+        }else if(me.index === 0 && me.value === 1 && me.type === "axes"){
             moveX = 1;
-          }else {
+        }else {
             moveX = 0;
-          }
+        }
+
+        if(me.index === 2 && me.value === -1 && me.type === "axes"){
+            playerPosition[controlled_player] = XL;
+        }else if(me.index === 2 && me.value === 1 && me.type === "axes"){
+            playerPosition[controlled_player] = XR;
+        }else if(me.index === 3 && me.value === -1 && me.type === "axes"){
+            playerPosition[controlled_player] = YU;
+        }else if(me.index === 3 && me.value === 1 && me.type === "axes"){
+            playerPosition[controlled_player] = YD;
+        }
+        console.log(playerPosition);
           
           if(me.index === 12) {
             moveY = -1;
@@ -558,11 +689,11 @@ function stop(gamepadIndex) {
     if(gamepadMode === true) {
         if(me.index === 1 && me.type === "axes") {
             moveY = 0;
-          }
+        }
           
-          if(me.index === 0 && me.type === "axes") {
+        if(me.index === 0 && me.type === "axes") {
             moveX = 0;
-          }
+        }
           
           if(me.index === 12) {
              moveY = 0;
