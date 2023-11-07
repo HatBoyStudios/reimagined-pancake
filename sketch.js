@@ -586,13 +586,13 @@ function enemyDisplay(num) {
         y: enemy[enemy_num].y
     }
 
-    var enemy2Ref = database.ref(sessionName+"/enemies/enemy"+(enemy_num+1));
+    var enemy2Ref = database.ref(sessionName+"/enemies");
     var enemy2Data = {
         enemy_count: enemyCount
     }
 
     var result = enemyRef.update(enemyData, dataSent);
-    var result = enemy2Ref.update(enemy2Data, dataSent);
+    var result2 = enemy2Ref.update(enemy2Data, dataSent);
     console.log(result.key);
 
   function dataSent(err, status) {
